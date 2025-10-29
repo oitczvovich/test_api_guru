@@ -1,0 +1,69 @@
+x-database-config: &database-config
+  image: postgres:17-alpine
+  env_file:
+    - .env
+  environment:
+    POSTGRES_DB: "${POSTGRES_DB:?Error: POSTGRES_DB is required}"
+    POSTGRES_USER: "${POSTGRES_USER:?Error: POSTGRES_USER is required}"
+    POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD is required}"
+    TZ: ${TZ:-Europe/Moscow}
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
+    - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+  networks:
+    - app_network
+  restart: unless-stopped
+
+services:
+  postgres:
+    <<: *database-config
+    container_name: postgres_db
+    ports:
+      - "${POSTGRES_PORT:?Error: POSTGRES_PORT is required}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL:?Error: PGADMIN_EMAIL is required}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD:?Error: PGADMIN_PASSWORD is required}"
+      TZ: ${TZ:-Europe/Moscow}
+    ports:
+      - "${PGADMIN_PORT:?Error: PGADMIN_PORT is required}:80"
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  #app:
+    #build: .
+    #container_name: app_guru
+    #env_file:
+      #- .env
+    #environment:
+      #DEBUG: ${DEBUG:-false}
+      #TZ: ${TZ:-Europe/Moscow}
+      #DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+    #ports:
+      #- "${APP_PORT:?Error: APP_PORT is required}:${APP_PORT:?Error: APP_PORT is required}"
+    #depends_on:
+      #postgres:
+        #condition: service_healthy
+    #networks:
+      #- app_network
+    #restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+
