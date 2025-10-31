@@ -9,7 +9,7 @@ x-database-config: &database-config
     TZ: ${TZ:-Europe/Moscow}
   volumes:
     - postgres_data:/var/lib/postgresql/data
-    - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    - ./postgres/init.sql:/docker-entrypoint-initdb.d/postgres/init.sql
   networks:
     - app_network
   restart: unless-stopped
@@ -43,23 +43,23 @@ services:
       - app_network
     restart: unless-stopped
 
-  #app:
-    #build: .
-    #container_name: app_guru
-    #env_file:
-      #- .env
-    #environment:
-      #DEBUG: ${DEBUG:-false}
-      #TZ: ${TZ:-Europe/Moscow}
-      #DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
-    #ports:
-      #- "${APP_PORT:?Error: APP_PORT is required}:${APP_PORT:?Error: APP_PORT is required}"
-    #depends_on:
-      #postgres:
-        #condition: service_healthy
-    #networks:
-      #- app_network
-    #restart: unless-stopped
+  app:
+    build: .
+    container_name: app_guru
+    env_file:
+      - .env
+    environment:
+      DEBUG: ${DEBUG:-false}
+      TZ: ${TZ:-Europe/Moscow}
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+    ports:
+      - "${APP_PORT:?Error: APP_PORT is required}:${APP_PORT:?Error: APP_PORT is required}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
