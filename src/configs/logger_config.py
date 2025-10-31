@@ -1,7 +1,8 @@
 import logging
 import sys
 import os
-from configs.settings import settings
+from src.configs.settings import settings
+
 
 LOG_LEVEL = "DEBUG" if settings.DEBUG else "INFO"
 if settings.DEBUG:
